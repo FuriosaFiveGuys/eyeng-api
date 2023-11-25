@@ -46,7 +46,7 @@ app.get("/", (req: Request, res: Response) => {
 
 app.post(
   "/image-to-text",
-  body("encodedImage").isBase64().notEmpty(),
+  body("imageUrl").isString().notEmpty(),
   async (req: Request, res: Response) => {
     const errors = validationResult(req);
 
@@ -54,10 +54,12 @@ app.post(
       return res.status(422).json({ errors: errors.array() });
     }
 
+    const imageUrl = req.body.imageUrl;
+
     const ocrResult = await fetch("http://14.35.173.13:20367/image-to-text", {
       method: "POST",
       body: JSON.stringify({
-        encodedImage: req.body.encodedImage,
+        imageUrl,
       }),
       headers: {
         "Content-Type": "application/json",
