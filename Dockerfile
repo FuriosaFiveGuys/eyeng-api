@@ -13,4 +13,5 @@ RUN npm install
 # Step 5: Copy the rest of your app's source code
 COPY . .
 
-CMD [ "ts-node", "index.ts" ]
+CMD ["npm", "start"]
+
