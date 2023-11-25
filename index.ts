@@ -5,6 +5,8 @@ import { body, validationResult } from "express-validator";
 import OpenAI from "openai";
 import { removeStopwords } from "stopword";
 
+import { PrismaClient } from "@prisma/client";
+
 import { generatePrompt } from "./utils";
 
 //For env File
@@ -18,6 +20,7 @@ type Quiz = {
 
 type TokenizationResult = {
   ok: boolean;
+  studyId: number;
   sentences: Sentence[];
 };
 
@@ -30,6 +33,8 @@ type Word = {
   word: string;
   isStopWord: boolean;
 };
+
+const prisma = new PrismaClient();
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -79,8 +84,15 @@ app.post(
       .map((sentence) => sentence.trim())
       .filter((sentence) => sentence.length > 0);
 
+    const study = await prisma.study.create({
+      data: {
+        imageUrl,
+      },
+    });
+
     const result: TokenizationResult = {
       ok: true,
+      studyId: study.id,
       sentences: dialogSentences.map((sentence) => {
         const segmentedText = segmenter.segment(sentence);
 
@@ -100,6 +112,63 @@ app.post(
     };
 
     res.json(result);
+  }
+);
+
+app.get("/study/:studyId", async (req: Request, res: Response) => {
+  const { studyId } = req.params;
+
+  const study = await prisma.study.findUnique({
+    where: {
+      id: Number(studyId),
+    },
+    include: {
+      words: true,
+    },
+  });
+
+  if (!study) {
+    return res.status(404).json({ message: "Study Not Found" });
+  }
+
+  res.json(study);
+});
+
+app.post(
+  "/study/:studyId/word",
+  body("sentence").isString(),
+  body("word").isString(),
+  async (req: Request, res: Response) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res
+        .status(422)
+        .json({ errors: errors.array(), message: "Invalid Request" });
+    }
+
+    const { sentence, word } = req.body;
+    const { studyId } = req.params;
+
+    const study = await prisma.study.findUnique({
+      where: {
+        id: Number(studyId),
+      },
+    });
+
+    if (!study) {
+      return res.status(404).json({ message: "Study Not Found" });
+    }
+
+    const wordInSentence = await prisma.wordInSentence.create({
+      data: {
+        sentence,
+        word,
+        studyId: Number(studyId),
+      },
+    });
+
+    res.json(wordInSentence);
   }
 );
 

@@ -9,16 +9,21 @@ generator client {
 }
 
 model Study {
-  id      Int    @id @default(autoincrement())
-  quizzes Quiz[]
+  id        Int              @id @default(autoincrement())
+  imageUrl  String
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  words     WordInSentence[]
 }
 
-model Quiz {
-  id       Int    @id @default(autoincrement())
-  studyId  Int
-  study    Study  @relation(fields: [studyId], references: [id])
-  question String
-  answer   String
+model WordInSentence {
+  id        Int      @id @default(autoincrement())
+  word      String
+  sentence  String
+  studyId   Int
+  study     Study    @relation(fields: [studyId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([studyId])
 }
