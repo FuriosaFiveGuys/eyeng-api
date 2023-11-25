@@ -1,3 +1,4 @@
+import cors from "cors";
 import dotenv from "dotenv";
 import express, { Application, Request, Response } from "express";
 import { body, validationResult } from "express-validator";
@@ -37,6 +38,7 @@ const openai = new OpenAI({
 const app: Application = express();
 const port = process.env.PORT || 8000;
 
+app.use(cors());
 app.use(express.json());
 app.get("/", (req: Request, res: Response) => {
   res.send("We are Five Guys");
@@ -45,20 +47,32 @@ app.get("/", (req: Request, res: Response) => {
 app.post(
   "/image-to-text",
   body("encodedImage").isBase64().notEmpty(),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
       return res.status(422).json({ errors: errors.array() });
     }
 
+    const ocrResult = await fetch("http://14.35.173.13:20367/image-to-text", {
+      method: "POST",
+      body: JSON.stringify({
+        encodedImage: req.body.encodedImage,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = (await ocrResult.json()) as {
+      sentences: string;
+    };
+
     //@ts-ignore
     const segmenter = new Intl.Segmenter("en", { granularity: "word" });
 
-    const dummyDialog =
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.";
-
-    const dialogSentences = dummyDialog
+    const dialogSentences = data.sentences
+      .replace(/"/g, "")
       .split(".")
       .map((sentence) => sentence.trim())
       .filter((sentence) => sentence.length > 0);
