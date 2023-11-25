@@ -4,6 +4,7 @@
   "description": "server for five guys",
   "main": "index.js",
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "ts-node-dev index.ts",
     "start": "ts-node index.ts"
   },
