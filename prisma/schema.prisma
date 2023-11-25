@@ -1,0 +1,24 @@
+datasource db {
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Study {
+  id      Int    @id @default(autoincrement())
+  quizzes Quiz[]
+}
+
+model Quiz {
+  id       Int    @id @default(autoincrement())
+  studyId  Int
+  study    Study  @relation(fields: [studyId], references: [id])
+  question String
+  answer   String
+
+  @@index([studyId])
+}
