@@ -11,4 +11,4 @@ COPY . .
 RUN npm install
 
 # Step 5: Copy the rest of your app's source code
-CMD ["./ruuner.sh"]
+CMD ["./runner.sh"]
