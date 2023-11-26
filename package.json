@@ -1,7 +1,7 @@
 {
-  "name": "furiosa-server",
+  "name": "eyeng-api",
   "version": "1.0.0",
-  "description": "server for five guys",
+  "description": "server for eyeng",
   "main": "index.js",
   "scripts": {
     "postinstall": "prisma generate",
